@@ -1,7 +1,6 @@
 package com.tingshuaike.tinynettyserver.Demos;
 
 import io.netty.bootstrap.ServerBootstrap;
-import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
@@ -21,6 +20,7 @@ public class HelloWorldNettyServer {
 	}
 
 	public void run() throws InterruptedException {
+		System.out.println("read to  start  the  helloworldNettyServer.....");
 		// the netty server need config two EventLoopGroup but the client need
 		// only one
 		EventLoopGroup bossGroup = new NioEventLoopGroup();
@@ -31,12 +31,12 @@ public class HelloWorldNettyServer {
 			b.group(bossGroup, workerGroup).channel(NioServerSocketChannel.class)
 					.childHandler(new ChannelInitializer<SocketChannel>() {
 						protected void initChannel(SocketChannel ch) throws Exception {
-							ch.pipeline().addLast(new MsgChannelHandler());
+							ch.pipeline().addLast(new HelloWorldMsgChannelHandler());
 						};
 					}).option(ChannelOption.SO_BACKLOG, 128).childOption(ChannelOption.SO_KEEPALIVE, true);
 			// Bind and start to accept incoming connections
 			ChannelFuture f = b.bind(port).sync();
-
+			System.out.println("helloworldNettyServer  is  on.....");
 			// wait until the server socket is closed
 			// shutdown this server
 			f.channel().closeFuture().sync();
