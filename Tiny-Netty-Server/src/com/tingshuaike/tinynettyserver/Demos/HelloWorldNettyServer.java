@@ -11,6 +11,7 @@ import io.netty.channel.socket.nio.NioServerSocketChannel;
 
 /**
  * @author kuby 2016.04.10 the first demo for netty server demo
+ * 
  */
 public class HelloWorldNettyServer {
 	private int port;
