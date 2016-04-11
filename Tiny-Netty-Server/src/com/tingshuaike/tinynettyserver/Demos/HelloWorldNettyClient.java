@@ -9,6 +9,10 @@ import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 
+/**
+ * @author Kuby
+ *
+ */
 public class HelloWorldNettyClient {
 
 	public static void main(String[] args) {
