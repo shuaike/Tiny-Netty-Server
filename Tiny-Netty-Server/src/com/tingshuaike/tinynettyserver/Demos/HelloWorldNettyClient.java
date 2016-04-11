@@ -11,7 +11,7 @@ import io.netty.channel.socket.nio.NioSocketChannel;
 
 /**
  * @author Kuby
- *
+ * 2016.04.11
  */
 public class HelloWorldNettyClient {
 
