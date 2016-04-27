@@ -8,16 +8,17 @@ import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
 import java.nio.charset.Charset;
+import java.util.Iterator;
 import java.util.Set;
 
 /**
- * @author kuby
- *  2016.04.12
+ * @author kuby 2016.04.12
  */
 public class NioClient {
-	public  static  boolean  ISRUN=true;
-	public  static  void  main(String[]  args)
-	{
+	public static boolean ISRUN = true;
+	private static String MSG = "Hi,I am " + System.currentTimeMillis() + " !";
+
+	public static void main(String[] args) {
 		System.out.println("NIO Client  ready  to  start....");
 		run();
 		System.out.println("NIO Client  ready  is  on....");
@@ -33,47 +34,61 @@ public class NioClient {
 		SocketChannel  socketChannl;
 		Selector  selector;
 		try {
+			selector=Selector.open();
 			socketChannl=SocketChannel.open();
 			socketChannl.configureBlocking(false);
-			selector=Selector.open();
 			
-			//regist  read  event  to  the  selector
-			socketChannl.register(selector, SelectionKey.OP_READ);
-			socketChannl.register(selector, SelectionKey.OP_CONNECT);
-			//connect  to  the  server
+			//connecting  to  the  server  current  thread  wouldn't wait  when  you has configed the block to false.  
 			socketChannl.connect(remote);
+			//regist  connect  event  to  the  selector
+			socketChannl.register(selector, SelectionKey.OP_CONNECT);
 			
 			//build  the  reactor  mode
 			while(ISRUN)
 			{
 				//check   whether  there  is  a  net  event  has happed?
-				if(selector.select()>0)
+				if(selector.select(200)>0)
 				{
 					//get  the  key   and  query  the  event's  type
 						Set<SelectionKey> keys = selector.selectedKeys();
-						while (keys.iterator().hasNext()) {
+						Iterator<SelectionKey>   it=keys.iterator();
+						while (it.hasNext()) {
 							// get the key and then remove from the key set
-							SelectionKey selectionKey = keys.iterator().next();
-							// msg ready for reading Event
-							 if (selectionKey.equals(SelectionKey.OP_READ)) {
-								ByteBuffer byteBuffer = ByteBuffer.allocate(10);
+							SelectionKey selectionKey = it.next();
+							it.remove();
+							// msg ready for reading Event  receive the  msg  from  the  server
+							 if (selectionKey.isValid()&&selectionKey.isReadable()) {
+								ByteBuffer byteBuffer = ByteBuffer.allocate(1024);
 								SocketChannel clientSocket = (SocketChannel) selectionKey.channel();
 								// ready to put the data to the ByteBuffer
-								byteBuffer.flip();
+								byteBuffer.clear();
 								clientSocket.read(byteBuffer);
+								byteBuffer.flip();
 								String msg;
 								Charset cs = Charset.forName("UTF-8");
 								msg = new String(byteBuffer.array(), cs);
-								System.out.println(msg);
+								System.out.println("NioClient receive response from the server: "+msg);
 							}
 							// establish the connection
-							else if (selectionKey.equals(SelectionKey.OP_CONNECT)) {
-								//when  eatablish  the  connection  regist  the  write  Event  to  the  selector
+							else if (selectionKey.isValid()&&selectionKey.isConnectable()) {
+								SocketChannel  clientChannl=(SocketChannel) selectionKey.channel();
+								if(clientChannl.isConnectionPending()){
+									clientChannl.finishConnect();
+								}
+							    //config  the  SocketChannel  nonBolck
+								clientChannl.configureBlocking(false);
+								// send the  msg  
+								clientChannl.write(ByteBuffer.wrap(MSG.getBytes()));
+								//ready for  reading the  response  from  the  server
+								clientChannl.register(selector, SelectionKey.OP_READ);
 							}
-							// ready  to  write  data  to  the  server
-							else if (selectionKey.equals(SelectionKey.OP_WRITE)) {
-								//when  eatablish  the  connection  regist  the  write  Event  to  the  selector
+							// send  half package
+							else if (selectionKey.isValid()&&selectionKey.isWritable()) {
+								SocketChannel  clientChannl=(SocketChannel) selectionKey.channel();
+							    //config  the  SocketChannel  nonBolck
+								clientChannl.configureBlocking(false);
 								
+								clientChannl.register(selector, SelectionKey.OP_READ);
 							}
 					}
 				}
@@ -82,5 +97,5 @@ public class NioClient {
 			e.printStackTrace();
 		}
 	}
-	
+
 }
